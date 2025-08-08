@@ -1,0 +1,518 @@
+// MainActivity.kt
+package com.cybersec.topicgenerator
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.animation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlin.random.Random
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            CyberSecTopicGeneratorTheme {
+                TopicGeneratorApp()
+            }
+        }
+    }
+}
+
+@Composable
+fun CyberSecTopicGeneratorTheme(content: @Composable () -> Unit) {
+    MaterialTheme(
+        colorScheme = darkColorScheme(
+            primary = Color(0xFF00D4FF),
+            secondary = Color(0xFFFF6B6B),
+            tertiary = Color(0xFF4ECDC4),
+            background = Color(0xFF0A0E1A),
+            surface = Color(0xFF1A1F2E),
+            onPrimary = Color.Black,
+            onSecondary = Color.White,
+            onBackground = Color.White,
+            onSurface = Color.White
+        ),
+        content = content
+    )
+}
+
+data class CyberTopic(
+    val id: String,
+    val title: String,
+    val description: String,
+    val type: TopicType,
+    val mitreId: String,
+    val difficulty: Difficulty
+)
+
+enum class TopicType(val displayName: String, val color: Color) {
+    OFFENSIVE("Offensive", Color(0xFFFF4444)),
+    DEFENSIVE("Defensive", Color(0xFF44FF44))
+}
+
+enum class Difficulty(val displayName: String) {
+    BEGINNER("Beginner"),
+    INTERMEDIATE("Intermediate"),
+    ADVANCED("Advanced")
+}
+
+class TopicGeneratorViewModel : ViewModel() {
+    private val _currentTopic = MutableStateFlow<CyberTopic?>(null)
+    val currentTopic: StateFlow<CyberTopic?> = _currentTopic.asStateFlow()
+
+    private val _topicHistory = MutableStateFlow<List<CyberTopic>>(emptyList())
+    val topicHistory: StateFlow<List<CyberTopic>> = _topicHistory.asStateFlow()
+
+    private val _savedTopics = MutableStateFlow<List<CyberTopic>>(emptyList())
+    val savedTopics: StateFlow<List<CyberTopic>> = _savedTopics.asStateFlow()
+
+    private val _isHistoryExpanded = MutableStateFlow(false)
+    val isHistoryExpanded: StateFlow<Boolean> = _isHistoryExpanded.asStateFlow()
+
+    // MITRE ATT&CK inspired topics database
+    private val topicsDatabase = listOf(
+        // Offensive Topics (Red Team)
+        CyberTopic("T1566", "Spear Phishing Attachment", "Craft targeted emails with malicious attachments to gain initial access. Learn to identify social engineering vectors and create realistic phishing campaigns for testing organizational security awareness.", TopicType.OFFENSIVE, "T1566.001", Difficulty.BEGINNER),
+        
+        CyberTopic("T1055", "Process Injection Techniques", "Explore methods to inject malicious code into legitimate processes to evade detection. Study DLL injection, process hollowing, and thread execution hijacking techniques.", TopicType.OFFENSIVE, "T1055", Difficulty.ADVANCED),
+        
+        CyberTopic("T1021", "Remote Services Exploitation", "Utilize remote desktop protocol (RDP) and other remote services for lateral movement. Practice credential stuffing and brute force techniques against remote access points.", TopicType.OFFENSIVE, "T1021.001", Difficulty.INTERMEDIATE),
+        
+        CyberTopic("T1190", "Web Application Vulnerabilities", "Exploit common web application flaws including SQL injection, XSS, and CSRF. Learn to identify and leverage OWASP Top 10 vulnerabilities for system compromise.", TopicType.OFFENSIVE, "T1190", Difficulty.BEGINNER),
+        
+        CyberTopic("T1098", "Account Manipulation", "Modify existing accounts to maintain persistence and escalate privileges. Study techniques for adding credentials, changing permissions, and creating backdoor access.", TopicType.OFFENSIVE, "T1098", Difficulty.INTERMEDIATE),
+        
+        CyberTopic("T1486", "Data Encryption for Impact", "Deploy ransomware techniques to encrypt critical data. Understand file encryption methods, ransom note deployment, and recovery prevention strategies.", TopicType.OFFENSIVE, "T1486", Difficulty.ADVANCED),
+        
+        CyberTopic("T1003", "OS Credential Dumping", "Extract credentials from operating system credential stores. Practice using tools like Mimikatz to harvest passwords, hashes, and Kerberos tickets.", TopicType.OFFENSIVE, "T1003.001", Difficulty.ADVANCED),
+        
+        CyberTopic("T1087", "Account Discovery", "Enumerate user accounts and group memberships for reconnaissance. Learn to identify high-value targets and understand organizational structure through account enumeration.", TopicType.OFFENSIVE, "T1087.001", Difficulty.BEGINNER),
+        
+        // Defensive Topics (Blue Team)
+        CyberTopic("D1566", "Email Security Monitoring", "Implement email filtering and analysis systems to detect phishing attempts. Deploy DMARC, SPF, and DKIM authentication mechanisms to prevent email spoofing.", TopicType.DEFENSIVE, "M1054", Difficulty.INTERMEDIATE),
+        
+        CyberTopic("D1055", "Process Monitoring & Analysis", "Deploy behavioral analysis tools to detect process injection attacks. Monitor for unusual process creation patterns and implement application whitelisting controls.", TopicType.DEFENSIVE, "M1040", Difficulty.ADVANCED),
+        
+        CyberTopic("D1021", "Network Access Control", "Implement network segmentation and access controls to limit lateral movement. Deploy VPN monitoring and multi-factor authentication for remote services.", TopicType.DEFENSIVE, "M1030", Difficulty.INTERMEDIATE),
+        
+        CyberTopic("D1190", "Web Application Security", "Implement web application firewalls and secure coding practices. Deploy input validation, output encoding, and regular security testing for web applications.", TopicType.DEFENSIVE, "M1050", Difficulty.BEGINNER),
+        
+        CyberTopic("D1098", "Account Monitoring", "Deploy user and entity behavior analytics (UEBA) to detect account anomalies. Implement privileged access management and regular account auditing procedures.", TopicType.DEFENSIVE, "M1026", Difficulty.INTERMEDIATE),
+        
+        CyberTopic("D1486", "Data Protection & Backup", "Implement comprehensive backup strategies and data loss prevention systems. Deploy endpoint protection and network monitoring to detect ransomware activities.", TopicType.DEFENSIVE, "M1053", Difficulty.ADVANCED),
+        
+        CyberTopic("D1003", "Credential Protection", "Deploy privileged access workstations and credential vaults. Implement local security authority (LSA) protection and monitor for credential dumping attempts.", TopicType.DEFENSIVE, "M1027", Difficulty.ADVANCED),
+        
+        CyberTopic("D1087", "Access Logging & Monitoring", "Implement comprehensive logging and monitoring of account enumeration activities. Deploy deception technologies and monitor for reconnaissance attempts.", TopicType.DEFENSIVE, "M1028", Difficulty.BEGINNER),
+        
+        // Additional Mixed Topics
+        CyberTopic("T1203", "Client-side Exploitation", "Exploit vulnerabilities in client applications like browsers and office suites. Study drive-by downloads, malicious documents, and browser exploitation frameworks.", TopicType.OFFENSIVE, "T1203", Difficulty.INTERMEDIATE),
+        
+        CyberTopic("D1203", "Endpoint Detection Response", "Deploy EDR solutions to detect and respond to client-side attacks. Implement application sandboxing and behavioral analysis for suspicious file execution.", TopicType.DEFENSIVE, "M1050", Difficulty.INTERMEDIATE)
+    )
+
+    fun generateRandomTopic() {
+        val randomTopic = topicsDatabase.random()
+        _currentTopic.value = randomTopic
+        
+        // Add to history (keep last 10 topics)
+        val updatedHistory = (_topicHistory.value + randomTopic).takeLast(10)
+        _topicHistory.value = updatedHistory
+    }
+
+    fun saveTopic(topic: CyberTopic) {
+        val currentSaved = _savedTopics.value
+        if (!currentSaved.contains(topic)) {
+            _savedTopics.value = currentSaved + topic
+        }
+    }
+
+    fun removeSavedTopic(topic: CyberTopic) {
+        _savedTopics.value = _savedTopics.value - topic
+    }
+
+    fun clearHistory() {
+        _topicHistory.value = emptyList()
+    }
+
+    fun toggleHistoryExpanded() {
+        _isHistoryExpanded.value = !_isHistoryExpanded.value
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopicGeneratorApp(viewModel: TopicGeneratorViewModel = viewModel()) {
+    val currentTopic by viewModel.currentTopic.collectAsState()
+    val topicHistory by viewModel.topicHistory.collectAsState()
+    val savedTopics by viewModel.savedTopics.collectAsState()
+    val isHistoryExpanded by viewModel.isHistoryExpanded.collectAsState()
+    
+    var selectedTab by remember { mutableStateOf(0) }
+    val tabs = listOf("Generator", "Saved Topics")
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        // Top App Bar
+        TopAppBar(
+            title = { 
+                Text(
+                    "CyberSec Topic Generator",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        )
+
+        // Tab Row
+        TabRow(
+            selectedTabIndex = selectedTab,
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.primary
+        ) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTab == index,
+                    onClick = { selectedTab = index },
+                    text = { Text(title, fontWeight = FontWeight.Medium) }
+                )
+            }
+        }
+
+        // Content based on selected tab
+        when (selectedTab) {
+            0 -> GeneratorScreen(viewModel, currentTopic, topicHistory, isHistoryExpanded)
+            1 -> SavedTopicsScreen(savedTopics, viewModel::removeSavedTopic)
+        }
+    }
+}
+
+@Composable
+fun GeneratorScreen(
+    viewModel: TopicGeneratorViewModel,
+    currentTopic: CyberTopic?,
+    topicHistory: List<CyberTopic>,
+    isHistoryExpanded: Boolean
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Header
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Educational Penetration Testing",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Generate topics for red team and blue team training",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+        }
+
+        // Generate Button
+        Button(
+            onClick = { viewModel.generateRandomTopic() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(Icons.Default.Refresh, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                "Generate Topic",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        // Current Topic Card
+        AnimatedVisibility(
+            visible = currentTopic != null,
+            enter = slideInVertically() + fadeIn(),
+            exit = slideOutVertically() + fadeOut()
+        ) {
+            currentTopic?.let { topic ->
+                TopicCard(
+                    topic = topic,
+                    onSave = { viewModel.saveTopic(topic) },
+                    showSaveButton = true
+                )
+            }
+        }
+
+        // History Section
+        if (topicHistory.isNotEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.toggleHistoryExpanded() }
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "History (${topicHistory.size})",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Row {
+                            IconButton(onClick = { viewModel.clearHistory() }) {
+                                Icon(Icons.Default.Clear, contentDescription = "Clear History")
+                            }
+                            Icon(
+                                if (isHistoryExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = if (isHistoryExpanded) "Collapse" else "Expand"
+                            )
+                        }
+                    }
+
+                    AnimatedVisibility(visible = isHistoryExpanded) {
+                        LazyColumn(
+                            modifier = Modifier.height(300.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(16.dp)
+                        ) {
+                            items(topicHistory.reversed()) { topic ->
+                                TopicCard(
+                                    topic = topic,
+                                    onSave = { viewModel.saveTopic(topic) },
+                                    showSaveButton = true,
+                                    isCompact = true
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SavedTopicsScreen(
+    savedTopics: List<CyberTopic>,
+    onRemove: (CyberTopic) -> Unit
+) {
+    if (savedTopics.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    Icons.Default.BookmarkBorder,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "No saved topics yet",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                )
+            }
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(savedTopics) { topic ->
+                TopicCard(
+                    topic = topic,
+                    onSave = { onRemove(topic) },
+                    showSaveButton = true,
+                    saveButtonIcon = Icons.Default.Delete,
+                    saveButtonText = "Remove"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TopicCard(
+    topic: CyberTopic,
+    onSave: () -> Unit,
+    showSaveButton: Boolean = false,
+    isCompact: Boolean = false,
+    saveButtonIcon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Default.Bookmark,
+    saveButtonText: String = "Save"
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            // Type Badge and MITRE ID
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    color = topic.type.color,
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    Text(
+                        text = topic.type.displayName,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                
+                Text(
+                    text = topic.mitreId,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+
+            // Title
+            Text(
+                text = topic.title,
+                style = if (isCompact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            // Difficulty
+            Surface(
+                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.padding(bottom = 12.dp)
+            ) {
+                Text(
+                    text = topic.difficulty.displayName,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    color = MaterialTheme.colorScheme.tertiary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            // Description
+            if (!isCompact) {
+                Text(
+                    text = topic.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    lineHeight = 20.sp,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // Educational Disclaimer
+                Surface(
+                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = if (showSaveButton) 16.dp else 0.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "For educational and authorized testing purposes only",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                }
+            }
+
+            // Save Button
+            if (showSaveButton) {
+                OutlinedButton(
+                    onClick = onSave,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(saveButtonIcon, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(saveButtonText)
+                }
+            }
+        }
+    }
+}
