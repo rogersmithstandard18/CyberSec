@@ -1,518 +1,417 @@
-// MainActivity.kt
-package com.cybersec.topicgenerator
-
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.animation.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlin.random.Random
-
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            CyberSecTopicGeneratorTheme {
-                TopicGeneratorApp()
-            }
-        }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberSec Topic Generator</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333; 
+      margin: 0; 
+      padding: 0; 
+      min-height: 100vh;
     }
-}
-
-@Composable
-fun CyberSecTopicGeneratorTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = darkColorScheme(
-            primary = Color(0xFF00D4FF),
-            secondary = Color(0xFFFF6B6B),
-            tertiary = Color(0xFF4ECDC4),
-            background = Color(0xFF0A0E1A),
-            surface = Color(0xFF1A1F2E),
-            onPrimary = Color.Black,
-            onSecondary = Color.White,
-            onBackground = Color.White,
-            onSurface = Color.White
-        ),
-        content = content
-    )
-}
-
-data class CyberTopic(
-    val id: String,
-    val title: String,
-    val description: String,
-    val type: TopicType,
-    val mitreId: String,
-    val difficulty: Difficulty
-)
-
-enum class TopicType(val displayName: String, val color: Color) {
-    OFFENSIVE("Offensive", Color(0xFFFF4444)),
-    DEFENSIVE("Defensive", Color(0xFF44FF44))
-}
-
-enum class Difficulty(val displayName: String) {
-    BEGINNER("Beginner"),
-    INTERMEDIATE("Intermediate"),
-    ADVANCED("Advanced")
-}
-
-class TopicGeneratorViewModel : ViewModel() {
-    private val _currentTopic = MutableStateFlow<CyberTopic?>(null)
-    val currentTopic: StateFlow<CyberTopic?> = _currentTopic.asStateFlow()
-
-    private val _topicHistory = MutableStateFlow<List<CyberTopic>>(emptyList())
-    val topicHistory: StateFlow<List<CyberTopic>> = _topicHistory.asStateFlow()
-
-    private val _savedTopics = MutableStateFlow<List<CyberTopic>>(emptyList())
-    val savedTopics: StateFlow<List<CyberTopic>> = _savedTopics.asStateFlow()
-
-    private val _isHistoryExpanded = MutableStateFlow(false)
-    val isHistoryExpanded: StateFlow<Boolean> = _isHistoryExpanded.asStateFlow()
-
-    // MITRE ATT&CK inspired topics database
-    private val topicsDatabase = listOf(
-        // Offensive Topics (Red Team)
-        CyberTopic("T1566", "Spear Phishing Attachment", "Craft targeted emails with malicious attachments to gain initial access. Learn to identify social engineering vectors and create realistic phishing campaigns for testing organizational security awareness.", TopicType.OFFENSIVE, "T1566.001", Difficulty.BEGINNER),
-        
-        CyberTopic("T1055", "Process Injection Techniques", "Explore methods to inject malicious code into legitimate processes to evade detection. Study DLL injection, process hollowing, and thread execution hijacking techniques.", TopicType.OFFENSIVE, "T1055", Difficulty.ADVANCED),
-        
-        CyberTopic("T1021", "Remote Services Exploitation", "Utilize remote desktop protocol (RDP) and other remote services for lateral movement. Practice credential stuffing and brute force techniques against remote access points.", TopicType.OFFENSIVE, "T1021.001", Difficulty.INTERMEDIATE),
-        
-        CyberTopic("T1190", "Web Application Vulnerabilities", "Exploit common web application flaws including SQL injection, XSS, and CSRF. Learn to identify and leverage OWASP Top 10 vulnerabilities for system compromise.", TopicType.OFFENSIVE, "T1190", Difficulty.BEGINNER),
-        
-        CyberTopic("T1098", "Account Manipulation", "Modify existing accounts to maintain persistence and escalate privileges. Study techniques for adding credentials, changing permissions, and creating backdoor access.", TopicType.OFFENSIVE, "T1098", Difficulty.INTERMEDIATE),
-        
-        CyberTopic("T1486", "Data Encryption for Impact", "Deploy ransomware techniques to encrypt critical data. Understand file encryption methods, ransom note deployment, and recovery prevention strategies.", TopicType.OFFENSIVE, "T1486", Difficulty.ADVANCED),
-        
-        CyberTopic("T1003", "OS Credential Dumping", "Extract credentials from operating system credential stores. Practice using tools like Mimikatz to harvest passwords, hashes, and Kerberos tickets.", TopicType.OFFENSIVE, "T1003.001", Difficulty.ADVANCED),
-        
-        CyberTopic("T1087", "Account Discovery", "Enumerate user accounts and group memberships for reconnaissance. Learn to identify high-value targets and understand organizational structure through account enumeration.", TopicType.OFFENSIVE, "T1087.001", Difficulty.BEGINNER),
-        
-        // Defensive Topics (Blue Team)
-        CyberTopic("D1566", "Email Security Monitoring", "Implement email filtering and analysis systems to detect phishing attempts. Deploy DMARC, SPF, and DKIM authentication mechanisms to prevent email spoofing.", TopicType.DEFENSIVE, "M1054", Difficulty.INTERMEDIATE),
-        
-        CyberTopic("D1055", "Process Monitoring & Analysis", "Deploy behavioral analysis tools to detect process injection attacks. Monitor for unusual process creation patterns and implement application whitelisting controls.", TopicType.DEFENSIVE, "M1040", Difficulty.ADVANCED),
-        
-        CyberTopic("D1021", "Network Access Control", "Implement network segmentation and access controls to limit lateral movement. Deploy VPN monitoring and multi-factor authentication for remote services.", TopicType.DEFENSIVE, "M1030", Difficulty.INTERMEDIATE),
-        
-        CyberTopic("D1190", "Web Application Security", "Implement web application firewalls and secure coding practices. Deploy input validation, output encoding, and regular security testing for web applications.", TopicType.DEFENSIVE, "M1050", Difficulty.BEGINNER),
-        
-        CyberTopic("D1098", "Account Monitoring", "Deploy user and entity behavior analytics (UEBA) to detect account anomalies. Implement privileged access management and regular account auditing procedures.", TopicType.DEFENSIVE, "M1026", Difficulty.INTERMEDIATE),
-        
-        CyberTopic("D1486", "Data Protection & Backup", "Implement comprehensive backup strategies and data loss prevention systems. Deploy endpoint protection and network monitoring to detect ransomware activities.", TopicType.DEFENSIVE, "M1053", Difficulty.ADVANCED),
-        
-        CyberTopic("D1003", "Credential Protection", "Deploy privileged access workstations and credential vaults. Implement local security authority (LSA) protection and monitor for credential dumping attempts.", TopicType.DEFENSIVE, "M1027", Difficulty.ADVANCED),
-        
-        CyberTopic("D1087", "Access Logging & Monitoring", "Implement comprehensive logging and monitoring of account enumeration activities. Deploy deception technologies and monitor for reconnaissance attempts.", TopicType.DEFENSIVE, "M1028", Difficulty.BEGINNER),
-        
-        // Additional Mixed Topics
-        CyberTopic("T1203", "Client-side Exploitation", "Exploit vulnerabilities in client applications like browsers and office suites. Study drive-by downloads, malicious documents, and browser exploitation frameworks.", TopicType.OFFENSIVE, "T1203", Difficulty.INTERMEDIATE),
-        
-        CyberTopic("D1203", "Endpoint Detection Response", "Deploy EDR solutions to detect and respond to client-side attacks. Implement application sandboxing and behavioral analysis for suspicious file execution.", TopicType.DEFENSIVE, "M1050", Difficulty.INTERMEDIATE)
-    )
-
-    fun generateRandomTopic() {
-        val randomTopic = topicsDatabase.random()
-        _currentTopic.value = randomTopic
-        
-        // Add to history (keep last 10 topics)
-        val updatedHistory = (_topicHistory.value + randomTopic).takeLast(10)
-        _topicHistory.value = updatedHistory
-    }
-
-    fun saveTopic(topic: CyberTopic) {
-        val currentSaved = _savedTopics.value
-        if (!currentSaved.contains(topic)) {
-            _savedTopics.value = currentSaved + topic
-        }
-    }
-
-    fun removeSavedTopic(topic: CyberTopic) {
-        _savedTopics.value = _savedTopics.value - topic
-    }
-
-    fun clearHistory() {
-        _topicHistory.value = emptyList()
-    }
-
-    fun toggleHistoryExpanded() {
-        _isHistoryExpanded.value = !_isHistoryExpanded.value
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TopicGeneratorApp(viewModel: TopicGeneratorViewModel = viewModel()) {
-    val currentTopic by viewModel.currentTopic.collectAsState()
-    val topicHistory by viewModel.topicHistory.collectAsState()
-    val savedTopics by viewModel.savedTopics.collectAsState()
-    val isHistoryExpanded by viewModel.isHistoryExpanded.collectAsState()
     
-    var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Generator", "Saved Topics")
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        // Top App Bar
-        TopAppBar(
-            title = { 
-                Text(
-                    "CyberSec Topic Generator",
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
-        )
-
-        // Tab Row
-        TabRow(
-            selectedTabIndex = selectedTab,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.primary
-        ) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    text = { Text(title, fontWeight = FontWeight.Medium) }
-                )
-            }
-        }
-
-        // Content based on selected tab
-        when (selectedTab) {
-            0 -> GeneratorScreen(viewModel, currentTopic, topicHistory, isHistoryExpanded)
-            1 -> SavedTopicsScreen(savedTopics, viewModel::removeSavedTopic)
-        }
+    .container { 
+      max-width: 600px; 
+      margin: 2rem auto; 
+      padding: 0 1rem; 
     }
-}
-
-@Composable
-fun GeneratorScreen(
-    viewModel: TopicGeneratorViewModel,
-    currentTopic: CyberTopic?,
-    topicHistory: List<CyberTopic>,
-    isHistoryExpanded: Boolean
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Header
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    "Educational Penetration Testing",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Generate topics for red team and blue team training",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-            }
-        }
-
-        // Generate Button
-        Button(
-            onClick = { viewModel.generateRandomTopic() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            ),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Icon(Icons.Default.Refresh, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                "Generate Topic",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-
-        // Current Topic Card
-        AnimatedVisibility(
-            visible = currentTopic != null,
-            enter = slideInVertically() + fadeIn(),
-            exit = slideOutVertically() + fadeOut()
-        ) {
-            currentTopic?.let { topic ->
-                TopicCard(
-                    topic = topic,
-                    onSave = { viewModel.saveTopic(topic) },
-                    showSaveButton = true
-                )
-            }
-        }
-
-        // History Section
-        if (topicHistory.isNotEmpty()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { viewModel.toggleHistoryExpanded() }
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "History (${topicHistory.size})",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Row {
-                            IconButton(onClick = { viewModel.clearHistory() }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear History")
-                            }
-                            Icon(
-                                if (isHistoryExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = if (isHistoryExpanded) "Collapse" else "Expand"
-                            )
-                        }
-                    }
-
-                    AnimatedVisibility(visible = isHistoryExpanded) {
-                        LazyColumn(
-                            modifier = Modifier.height(300.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            contentPadding = PaddingValues(16.dp)
-                        ) {
-                            items(topicHistory.reversed()) { topic ->
-                                TopicCard(
-                                    topic = topic,
-                                    onSave = { viewModel.saveTopic(topic) },
-                                    showSaveButton = true,
-                                    isCompact = true
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    
+    header { 
+      text-align: center; 
+      margin-bottom: 1.5rem; 
+      color: white;
     }
-}
-
-@Composable
-fun SavedTopicsScreen(
-    savedTopics: List<CyberTopic>,
-    onRemove: (CyberTopic) -> Unit
-) {
-    if (savedTopics.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    Icons.Default.BookmarkBorder,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    "No saved topics yet",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                )
-            }
-        }
-    } else {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(savedTopics) { topic ->
-                TopicCard(
-                    topic = topic,
-                    onSave = { onRemove(topic) },
-                    showSaveButton = true,
-                    saveButtonIcon = Icons.Default.Delete,
-                    saveButtonText = "Remove"
-                )
-            }
-        }
+    
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
-}
-
-@Composable
-fun TopicCard(
-    topic: CyberTopic,
-    onSave: () -> Unit,
-    showSaveButton: Boolean = false,
-    isCompact: Boolean = false,
-    saveButtonIcon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Default.Bookmark,
-    saveButtonText: String = "Save"
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // Type Badge and MITRE ID
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    color = topic.type.color,
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                ) {
-                    Text(
-                        text = topic.type.displayName,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                
-                Text(
-                    text = topic.mitreId,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-            }
-
-            // Title
-            Text(
-                text = topic.title,
-                style = if (isCompact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            // Difficulty
-            Surface(
-                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.padding(bottom = 12.dp)
-            ) {
-                Text(
-                    text = topic.difficulty.displayName,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    color = MaterialTheme.colorScheme.tertiary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            // Description
-            if (!isCompact) {
-                Text(
-                    text = topic.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    lineHeight = 20.sp,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                // Educational Disclaimer
-                Surface(
-                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = if (showSaveButton) 16.dp else 0.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Default.Info,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "For educational and authorized testing purposes only",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                }
-            }
-
-            // Save Button
-            if (showSaveButton) {
-                OutlinedButton(
-                    onClick = onSave,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(saveButtonIcon, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(saveButtonText)
-                }
-            }
-        }
+    
+    header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
     }
-}
+    
+    nav { 
+      display: flex; 
+      justify-content: center; 
+      gap: 0; 
+      margin-bottom: 1rem; 
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    nav button { 
+      padding: 0.75rem 1.5rem; 
+      border: none; 
+      background: rgba(255,255,255,0.2); 
+      cursor: pointer; 
+      color: white;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    
+    nav button:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    
+    nav button.active { 
+      background: rgba(255,255,255,0.9); 
+      color: #333; 
+    }
+    
+    .card { 
+      background: rgba(255,255,255,0.95); 
+      padding: 1.5rem; 
+      margin-bottom: 1rem; 
+      border-radius: 15px; 
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      backdrop-filter: blur(10px);
+    }
+    
+    .hidden { 
+      display: none; 
+    }
+    
+    #generateBtn { 
+      padding: 1rem 2rem; 
+      border: none; 
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: #fff; 
+      cursor: pointer; 
+      border-radius: 25px; 
+      font-size: 1.1rem;
+      font-weight: bold;
+      display: block;
+      margin: 0 auto 2rem;
+      transition: transform 0.2s ease;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    #generateBtn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    
+    .meta span {
+      background: #f0f0f0;
+      padding: 0.25rem 0.5rem;
+      border-radius: 15px;
+    }
+    
+    #topicTitle {
+      color: #333;
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
+    }
+    
+    #topicDesc {
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    #topicDiff {
+      background: #007acc;
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 15px;
+      font-size: 0.9rem;
+    }
+    
+    #saveBtn { 
+      padding: 0.5rem 1rem; 
+      border: none; 
+      background: #28a745; 
+      color: #fff; 
+      cursor: pointer; 
+      border-radius: 20px;
+      transition: background 0.3s ease;
+    }
+    
+    #saveBtn:hover {
+      background: #218838;
+    }
+    
+    #saveBtn.remove {
+      background: #dc3545;
+    }
+    
+    #saveBtn.remove:hover {
+      background: #c82333;
+    }
+    
+    #historyList, #savedList { 
+      list-style: none; 
+      padding: 0; 
+      margin: 0; 
+    }
+    
+    #historyList li, #savedList li { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      padding: 0.75rem 0; 
+      border-bottom: 1px solid #eee; 
+    }
+    
+    #historyList li:last-child, #savedList li:last-child {
+      border-bottom: none;
+    }
+    
+    .remove-btn {
+      padding: 0.25rem 0.5rem;
+      border: none;
+      background: #dc3545;
+      color: white;
+      border-radius: 15px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    
+    .remove-btn:hover {
+      background: #c82333;
+    }
+    
+    #toggleHistory {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0.25rem;
+      border-radius: 50%;
+      transition: transform 0.3s ease;
+    }
+    
+    #toggleHistory:hover {
+      background: #f0f0f0;
+    }
+    
+    #toggleHistory.expanded {
+      transform: rotate(180deg);
+    }
+    
+    .empty-state {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+      padding: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>CyberSec Topic Generator</h1>
+      <p>Generate topics for red team & blue team training!</p>
+    </header>
+
+    <nav>
+      <button id="tabGen" class="active">Generator</button>
+      <button id="tabSaved">Saved Topics</button>
+    </nav>
+
+    <main>
+      <section id="generator">
+        <button id="generateBtn">Generate Topic</button>
+        <div id="topicCard" class="card hidden">
+          <div class="meta">
+            <span id="topicType"></span>
+            <span id="topicID"></span>
+          </div>
+          <h2 id="topicTitle"></h2>
+          <p id="topicDesc"></p>
+          <div class="footer">
+            <span id="topicDiff"></span>
+            <button id="saveBtn">Save</button>
+          </div>
+        </div>
+        <div id="historyContainer" class="card hidden">
+          <h3>History (<span id="historyCount">0</span>) <button id="toggleHistory">▼</button></h3>
+          <ul id="historyList" class="hidden"></ul>
+        </div>
+      </section>
+
+      <section id="saved" class="hidden">
+        <div class="card">
+          <h2>Saved Topics</h2>
+          <ul id="savedList"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const topicsDatabase = [
+      { id: 'T1566.001', title: 'Spear Phishing Attachment', description: 'Craft targeted emails with malicious attachments to gain initial access to corporate networks.', type: 'Offensive', mitreId: 'T1566.001', difficulty: 'Beginner' },
+      { id: 'T1055', title: 'Process Injection Techniques', description: 'Inject malicious code into legitimate processes to evade detection and maintain persistence.', type: 'Offensive', mitreId: 'T1055', difficulty: 'Advanced' },
+      { id: 'T1057', title: 'Process Discovery', description: 'Discover running processes on a system to identify targets for lateral movement or privilege escalation.', type: 'Offensive', mitreId: 'T1057', difficulty: 'Beginner' },
+      { id: 'T1003', title: 'OS Credential Dumping', description: 'Extract credentials from operating system credential stores like SAM database or LSASS memory.', type: 'Offensive', mitreId: 'T1003', difficulty: 'Intermediate' },
+      { id: 'T1082', title: 'System Information Discovery', description: 'Gather detailed information about the operating system and hardware configuration.', type: 'Offensive', mitreId: 'T1082', difficulty: 'Beginner' },
+      { id: 'D1566', title: 'Email Security Controls', description: 'Implement advanced email filtering and sandboxing to prevent phishing attacks.', type: 'Defensive', mitreId: 'D3-EHFI', difficulty: 'Intermediate' },
+      { id: 'D1055', title: 'Process Monitoring', description: 'Deploy endpoint detection tools to monitor for suspicious process injection activities.', type: 'Defensive', mitreId: 'D3-PSA', difficulty: 'Advanced' },
+      { id: 'D1003', title: 'Credential Access Protection', description: 'Implement LSA protection and credential guard to prevent credential dumping attacks.', type: 'Defensive', mitreId: 'D3-CAP', difficulty: 'Advanced' },
+      { id: 'D1021', title: 'Network Segmentation', description: 'Design and implement network segmentation to limit lateral movement capabilities.', type: 'Defensive', mitreId: 'D3-NTA', difficulty: 'Intermediate' },
+      { id: 'D1047', title: 'System Hardening', description: 'Apply security configurations and remove unnecessary services to reduce attack surface.', type: 'Defensive', mitreId: 'D3-SH', difficulty: 'Beginner' }
+    ];
+
+    let history = [];
+    let saved = [];
+    let currentTopic = null;
+
+    // Initialize app
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSavedData();
+      setupEventListeners();
+      renderSaved();
+    });
+
+    function setupEventListeners() {
+      document.getElementById('tabGen').addEventListener('click', () => switchTab('gen'));
+      document.getElementById('tabSaved').addEventListener('click', () => switchTab('saved'));
+      document.getElementById('generateBtn').addEventListener('click', generateTopic);
+      document.getElementById('saveBtn').addEventListener('click', toggleSave);
+      document.getElementById('toggleHistory').addEventListener('click', toggleHistory);
+    }
+
+    function loadSavedData() {
+      // Use in-memory storage instead of localStorage for Claude.ai compatibility
+      saved = [];
+      history = [];
+    }
+
+    function switchTab(tab) {
+      const tabGen = document.getElementById('tabGen');
+      const tabSaved = document.getElementById('tabSaved');
+      const genSection = document.getElementById('generator');
+      const savedSection = document.getElementById('saved');
+
+      if (tab === 'gen') {
+        tabGen.classList.add('active');
+        tabSaved.classList.remove('active');
+        genSection.classList.remove('hidden');
+        savedSection.classList.add('hidden');
+      } else {
+        tabGen.classList.remove('active');
+        tabSaved.classList.add('active');
+        genSection.classList.add('hidden');
+        savedSection.classList.remove('hidden');
+      }
+    }
+
+    function generateTopic() {
+      const topic = topicsDatabase[Math.floor(Math.random() * topicsDatabase.length)];
+      currentTopic = topic;
+      history.unshift(topic); // Add to beginning
+      if (history.length > 10) history.pop(); // Keep only 10 items
+      renderTopic(topic);
+      renderHistory();
+    }
+
+    function renderTopic(topic) {
+      const topicCard = document.getElementById('topicCard');
+      const topicType = document.getElementById('topicType');
+      const topicID = document.getElementById('topicID');
+      const topicTitle = document.getElementById('topicTitle');
+      const topicDesc = document.getElementById('topicDesc');
+      const topicDiff = document.getElementById('topicDiff');
+      const saveBtn = document.getElementById('saveBtn');
+
+      topicCard.classList.remove('hidden');
+      topicType.textContent = topic.type;
+      topicID.textContent = topic.mitreId;
+      topicTitle.textContent = topic.title;
+      topicDesc.textContent = topic.description;
+      topicDiff.textContent = topic.difficulty;
+
+      const isSaved = saved.some(s => s.id === topic.id);
+      saveBtn.textContent = isSaved ? 'Remove' : 'Save';
+      saveBtn.className = isSaved ? 'remove' : '';
+    }
+
+    function renderHistory() {
+      const container = document.getElementById('historyContainer');
+      const list = document.getElementById('historyList');
+      const count = document.getElementById('historyCount');
+
+      count.textContent = history.length;
+      
+      if (history.length > 0) {
+        container.classList.remove('hidden');
+        list.innerHTML = history.map(topic => 
+          `<li><span>${topic.title}</span><small>${topic.type}</small></li>`
+        ).join('');
+      }
+    }
+
+    function toggleHistory() {
+      const historyList = document.getElementById('historyList');
+      const toggleBtn = document.getElementById('toggleHistory');
+      
+      historyList.classList.toggle('hidden');
+      toggleBtn.classList.toggle('expanded');
+    }
+
+    function toggleSave() {
+      if (!currentTopic) return;
+
+      const existingIndex = saved.findIndex(s => s.id === currentTopic.id);
+      
+      if (existingIndex > -1) {
+        saved.splice(existingIndex, 1);
+      } else {
+        saved.push(currentTopic);
+      }
+      
+      renderTopic(currentTopic); // Update save button
+      renderSaved();
+    }
+
+    function renderSaved() {
+      const list = document.getElementById('savedList');
+      
+      if (saved.length === 0) {
+        list.innerHTML = '<li class="empty-state">No saved topics yet. Generate and save topics from the Generator tab!</li>';
+      } else {
+        list.innerHTML = saved.map(topic => 
+          `<li>
+            <div>
+              <strong>${topic.title}</strong><br>
+              <small>${topic.type} • ${topic.difficulty} • ${topic.mitreId}</small>
+            </div>
+            <button class="remove-btn" onclick="removeSaved('${topic.id}')">Remove</button>
+          </li>`
+        ).join('');
+      }
+    }
+
+    function removeSaved(id) {
+      saved = saved.filter(topic => topic.id !== id);
+      renderSaved();
+      
+      // Update current topic display if it's the removed topic
+      if (currentTopic && currentTopic.id === id) {
+        renderTopic(currentTopic);
+      }
+    }
+  </script>
+</body>
+</html>
