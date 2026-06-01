@@ -1,417 +1,130 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CyberSec Topic Generator</title>
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #333; 
-      margin: 0; 
-      padding: 0; 
-      min-height: 100vh;
-    }
-    
-    .container { 
-      max-width: 600px; 
-      margin: 2rem auto; 
-      padding: 0 1rem; 
-    }
-    
-    header { 
-      text-align: center; 
-      margin-bottom: 1.5rem; 
-      color: white;
-    }
-    
-    header h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-    
-    header p {
-      font-size: 1.1rem;
-      opacity: 0.9;
-    }
-    
-    nav { 
-      display: flex; 
-      justify-content: center; 
-      gap: 0; 
-      margin-bottom: 1rem; 
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    
-    nav button { 
-      padding: 0.75rem 1.5rem; 
-      border: none; 
-      background: rgba(255,255,255,0.2); 
-      cursor: pointer; 
-      color: white;
-      font-weight: bold;
-      transition: all 0.3s ease;
-    }
-    
-    nav button:hover {
-      background: rgba(255,255,255,0.3);
-    }
-    
-    nav button.active { 
-      background: rgba(255,255,255,0.9); 
-      color: #333; 
-    }
-    
-    .card { 
-      background: rgba(255,255,255,0.95); 
-      padding: 1.5rem; 
-      margin-bottom: 1rem; 
-      border-radius: 15px; 
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-      backdrop-filter: blur(10px);
-    }
-    
-    .hidden { 
-      display: none; 
-    }
-    
-    #generateBtn { 
-      padding: 1rem 2rem; 
-      border: none; 
-      background: linear-gradient(45deg, #667eea, #764ba2);
-      color: #fff; 
-      cursor: pointer; 
-      border-radius: 25px; 
-      font-size: 1.1rem;
-      font-weight: bold;
-      display: block;
-      margin: 0 auto 2rem;
-      transition: transform 0.2s ease;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    
-    #generateBtn:hover {
-      transform: translateY(-2px);
-    }
-    
-    .meta {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-      font-size: 0.9rem;
-      color: #666;
-    }
-    
-    .meta span {
-      background: #f0f0f0;
-      padding: 0.25rem 0.5rem;
-      border-radius: 15px;
-    }
-    
-    #topicTitle {
-      color: #333;
-      margin-bottom: 1rem;
-      font-size: 1.4rem;
-    }
-    
-    #topicDesc {
-      line-height: 1.6;
-      margin-bottom: 1rem;
-    }
-    
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    #topicDiff {
-      background: #007acc;
-      color: white;
-      padding: 0.25rem 0.75rem;
-      border-radius: 15px;
-      font-size: 0.9rem;
-    }
-    
-    #saveBtn { 
-      padding: 0.5rem 1rem; 
-      border: none; 
-      background: #28a745; 
-      color: #fff; 
-      cursor: pointer; 
-      border-radius: 20px;
-      transition: background 0.3s ease;
-    }
-    
-    #saveBtn:hover {
-      background: #218838;
-    }
-    
-    #saveBtn.remove {
-      background: #dc3545;
-    }
-    
-    #saveBtn.remove:hover {
-      background: #c82333;
-    }
-    
-    #historyList, #savedList { 
-      list-style: none; 
-      padding: 0; 
-      margin: 0; 
-    }
-    
-    #historyList li, #savedList li { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center;
-      padding: 0.75rem 0; 
-      border-bottom: 1px solid #eee; 
-    }
-    
-    #historyList li:last-child, #savedList li:last-child {
-      border-bottom: none;
-    }
-    
-    .remove-btn {
-      padding: 0.25rem 0.5rem;
-      border: none;
-      background: #dc3545;
-      color: white;
-      border-radius: 15px;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-    
-    .remove-btn:hover {
-      background: #c82333;
-    }
-    
-    #toggleHistory {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1.2rem;
-      padding: 0.25rem;
-      border-radius: 50%;
-      transition: transform 0.3s ease;
-    }
-    
-    #toggleHistory:hover {
-      background: #f0f0f0;
-    }
-    
-    #toggleHistory.expanded {
-      transform: rotate(180deg);
-    }
-    
-    .empty-state {
-      text-align: center;
-      color: #666;
-      font-style: italic;
-      padding: 2rem;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>CyberSec Topic Generator</h1>
-      <p>Generate topics for red team & blue team training!</p>
-    </header>
+# Topicgen — Cybersecurity Topic Generator
 
-    <nav>
-      <button id="tabGen" class="active">Generator</button>
-      <button id="tabSaved">Saved Topics</button>
-    </nav>
+A browser-based flashcard-style tool for cybersecurity study and interview preparation. Generates topic cards drawn from a built-in library of MITRE ATT&CK–mapped offensive and defensive techniques, one at a time, with difficulty ratings and save functionality.
 
-    <main>
-      <section id="generator">
-        <button id="generateBtn">Generate Topic</button>
-        <div id="topicCard" class="card hidden">
-          <div class="meta">
-            <span id="topicType"></span>
-            <span id="topicID"></span>
-          </div>
-          <h2 id="topicTitle"></h2>
-          <p id="topicDesc"></p>
-          <div class="footer">
-            <span id="topicDiff"></span>
-            <button id="saveBtn">Save</button>
-          </div>
-        </div>
-        <div id="historyContainer" class="card hidden">
-          <h3>History (<span id="historyCount">0</span>) <button id="toggleHistory">▼</button></h3>
-          <ul id="historyList" class="hidden"></ul>
-        </div>
-      </section>
+No install required. Open the file in any modern browser.
 
-      <section id="saved" class="hidden">
-        <div class="card">
-          <h2>Saved Topics</h2>
-          <ul id="savedList"></ul>
-        </div>
-      </section>
-    </main>
-  </div>
+---
 
-  <script>
-    const topicsDatabase = [
-      { id: 'T1566.001', title: 'Spear Phishing Attachment', description: 'Craft targeted emails with malicious attachments to gain initial access to corporate networks.', type: 'Offensive', mitreId: 'T1566.001', difficulty: 'Beginner' },
-      { id: 'T1055', title: 'Process Injection Techniques', description: 'Inject malicious code into legitimate processes to evade detection and maintain persistence.', type: 'Offensive', mitreId: 'T1055', difficulty: 'Advanced' },
-      { id: 'T1057', title: 'Process Discovery', description: 'Discover running processes on a system to identify targets for lateral movement or privilege escalation.', type: 'Offensive', mitreId: 'T1057', difficulty: 'Beginner' },
-      { id: 'T1003', title: 'OS Credential Dumping', description: 'Extract credentials from operating system credential stores like SAM database or LSASS memory.', type: 'Offensive', mitreId: 'T1003', difficulty: 'Intermediate' },
-      { id: 'T1082', title: 'System Information Discovery', description: 'Gather detailed information about the operating system and hardware configuration.', type: 'Offensive', mitreId: 'T1082', difficulty: 'Beginner' },
-      { id: 'D1566', title: 'Email Security Controls', description: 'Implement advanced email filtering and sandboxing to prevent phishing attacks.', type: 'Defensive', mitreId: 'D3-EHFI', difficulty: 'Intermediate' },
-      { id: 'D1055', title: 'Process Monitoring', description: 'Deploy endpoint detection tools to monitor for suspicious process injection activities.', type: 'Defensive', mitreId: 'D3-PSA', difficulty: 'Advanced' },
-      { id: 'D1003', title: 'Credential Access Protection', description: 'Implement LSA protection and credential guard to prevent credential dumping attacks.', type: 'Defensive', mitreId: 'D3-CAP', difficulty: 'Advanced' },
-      { id: 'D1021', title: 'Network Segmentation', description: 'Design and implement network segmentation to limit lateral movement capabilities.', type: 'Defensive', mitreId: 'D3-NTA', difficulty: 'Intermediate' },
-      { id: 'D1047', title: 'System Hardening', description: 'Apply security configurations and remove unnecessary services to reduce attack surface.', type: 'Defensive', mitreId: 'D3-SH', difficulty: 'Beginner' }
-    ];
+## What It Is
 
-    let history = [];
-    let saved = [];
-    let currentTopic = null;
+Topicgen surfaces cybersecurity topics as study cards for red team and blue team practitioners. Each card presents:
 
-    // Initialize app
-    document.addEventListener('DOMContentLoaded', () => {
-      loadSavedData();
-      setupEventListeners();
-      renderSaved();
-    });
+- A **technique name** and **MITRE ID** (ATT&CK for offensive topics, D3FEND for defensive)
+- A plain-language **description** of what the technique involves in practice
+- A **difficulty rating** (Beginner, Intermediate, or Advanced)
+- A **type label** (Offensive or Defensive)
 
-    function setupEventListeners() {
-      document.getElementById('tabGen').addEventListener('click', () => switchTab('gen'));
-      document.getElementById('tabSaved').addEventListener('click', () => switchTab('saved'));
-      document.getElementById('generateBtn').addEventListener('click', generateTopic);
-      document.getElementById('saveBtn').addEventListener('click', toggleSave);
-      document.getElementById('toggleHistory').addEventListener('click', toggleHistory);
-    }
+Topics are drawn randomly from the library so repeated sessions surface different content. Cards you want to revisit can be saved to a session list.
 
-    function loadSavedData() {
-      // Use in-memory storage instead of localStorage for Claude.ai compatibility
-      saved = [];
-      history = [];
-    }
+---
 
-    function switchTab(tab) {
-      const tabGen = document.getElementById('tabGen');
-      const tabSaved = document.getElementById('tabSaved');
-      const genSection = document.getElementById('generator');
-      const savedSection = document.getElementById('saved');
+## How to Run
 
-      if (tab === 'gen') {
-        tabGen.classList.add('active');
-        tabSaved.classList.remove('active');
-        genSection.classList.remove('hidden');
-        savedSection.classList.add('hidden');
-      } else {
-        tabGen.classList.remove('active');
-        tabSaved.classList.add('active');
-        genSection.classList.add('hidden');
-        savedSection.classList.remove('hidden');
-      }
-    }
+Open `Topicgen` directly in any modern browser — Chrome, Firefox, or Safari:
 
-    function generateTopic() {
-      const topic = topicsDatabase[Math.floor(Math.random() * topicsDatabase.length)];
-      currentTopic = topic;
-      history.unshift(topic); // Add to beginning
-      if (history.length > 10) history.pop(); // Keep only 10 items
-      renderTopic(topic);
-      renderHistory();
-    }
+```bash
+# macOS
+open Topicgen
 
-    function renderTopic(topic) {
-      const topicCard = document.getElementById('topicCard');
-      const topicType = document.getElementById('topicType');
-      const topicID = document.getElementById('topicID');
-      const topicTitle = document.getElementById('topicTitle');
-      const topicDesc = document.getElementById('topicDesc');
-      const topicDiff = document.getElementById('topicDiff');
-      const saveBtn = document.getElementById('saveBtn');
+# Windows
+start Topicgen
 
-      topicCard.classList.remove('hidden');
-      topicType.textContent = topic.type;
-      topicID.textContent = topic.mitreId;
-      topicTitle.textContent = topic.title;
-      topicDesc.textContent = topic.description;
-      topicDiff.textContent = topic.difficulty;
+# Linux
+xdg-open Topicgen
+```
 
-      const isSaved = saved.some(s => s.id === topic.id);
-      saveBtn.textContent = isSaved ? 'Remove' : 'Save';
-      saveBtn.className = isSaved ? 'remove' : '';
-    }
+Or double-click the file in your file manager. No server, no npm, no build step required.
 
-    function renderHistory() {
-      const container = document.getElementById('historyContainer');
-      const list = document.getElementById('historyList');
-      const count = document.getElementById('historyCount');
+---
 
-      count.textContent = history.length;
-      
-      if (history.length > 0) {
-        container.classList.remove('hidden');
-        list.innerHTML = history.map(topic => 
-          `<li><span>${topic.title}</span><small>${topic.type}</small></li>`
-        ).join('');
-      }
-    }
+## Features
 
-    function toggleHistory() {
-      const historyList = document.getElementById('historyList');
-      const toggleBtn = document.getElementById('toggleHistory');
-      
-      historyList.classList.toggle('hidden');
-      toggleBtn.classList.toggle('expanded');
-    }
+| Feature | Description |
+|---|---|
+| **Generate** | Click "Generate Topic" to draw a random card from the library |
+| **Type filter** | Switch between All, Offensive, and Defensive topic sets using the tab nav |
+| **Save** | Save a card to your session list for later review |
+| **History** | Expand the history panel to review all cards generated in the current session |
+| **Saved Topics** | View your saved cards in the Saved Topics tab |
 
-    function toggleSave() {
-      if (!currentTopic) return;
+> **Note:** Saves and history are in-memory only. Closing or refreshing the browser tab clears all saved data. This is intentional — the tool is designed for focused study sessions, not long-term storage.
 
-      const existingIndex = saved.findIndex(s => s.id === currentTopic.id);
-      
-      if (existingIndex > -1) {
-        saved.splice(existingIndex, 1);
-      } else {
-        saved.push(currentTopic);
-      }
-      
-      renderTopic(currentTopic); // Update save button
-      renderSaved();
-    }
+---
 
-    function renderSaved() {
-      const list = document.getElementById('savedList');
-      
-      if (saved.length === 0) {
-        list.innerHTML = '<li class="empty-state">No saved topics yet. Generate and save topics from the Generator tab!</li>';
-      } else {
-        list.innerHTML = saved.map(topic => 
-          `<li>
-            <div>
-              <strong>${topic.title}</strong><br>
-              <small>${topic.type} • ${topic.difficulty} • ${topic.mitreId}</small>
-            </div>
-            <button class="remove-btn" onclick="removeSaved('${topic.id}')">Remove</button>
-          </li>`
-        ).join('');
-      }
-    }
+## Topic Library
 
-    function removeSaved(id) {
-      saved = saved.filter(topic => topic.id !== id);
-      renderSaved();
-      
-      // Update current topic display if it's the removed topic
-      if (currentTopic && currentTopic.id === id) {
-        renderTopic(currentTopic);
-      }
-    }
-  </script>
-</body>
-</html>
+The library contains both offensive (red team) and defensive (blue team) topics, each mapped to a MITRE framework ID.
+
+**Offensive topics** reference [MITRE ATT&CK](https://attack.mitre.org/) technique IDs (e.g. `T1566.001` for Spear Phishing with Attachments).
+
+**Defensive topics** reference [MITRE D3FEND](https://d3fend.mitre.org/) countermeasure IDs (e.g. `D3-EHFI` for Email Header Field Inspection).
+
+Sample topics from the library:
+
+| ID | Title | Type | Difficulty |
+|---|---|---|---|
+| T1566.001 | Spear Phishing Attachment | Offensive | Beginner |
+| T1055 | Process Injection Techniques | Offensive | Advanced |
+| T1003 | OS Credential Dumping | Offensive | Intermediate |
+| D1566 | Email Security Controls | Defensive | Intermediate |
+| D1055 | Process Monitoring | Defensive | Advanced |
+| D1003 | Credential Access Protection | Defensive | Advanced |
+| D1021 | Network Segmentation | Defensive | Intermediate |
+
+---
+
+## Intended Use
+
+Topicgen is designed for:
+
+- **Pre-interview warm-up** — run through a set of random cards before a technical interview to activate recall across both red and blue domains
+- **Study session structure** — use the type filter to focus a session on offensive or defensive topics
+- **Team knowledge checks** — project the tool during team meetings and use generated cards as discussion prompts
+
+---
+
+## Customization
+
+To add topics or modify the library, open `Topicgen` in a text editor and locate the `topicsDatabase` array in the `<script>` section. Each entry follows this structure:
+
+```js
+{
+  id: 'T1059.001',
+  title: 'PowerShell Execution',
+  description: 'Use PowerShell to execute commands, scripts, or encoded payloads for initial access, lateral movement, or C2 communication.',
+  type: 'Offensive',           // "Offensive" or "Defensive"
+  mitreId: 'T1059.001',        // MITRE ATT&CK or D3FEND identifier
+  difficulty: 'Intermediate',  // "Beginner", "Intermediate", or "Advanced"
+}
+```
+
+See [CONTRIBUTING.md](../CONTRIBUTING.md#adding-a-new-topic-to-topicgen) for full guidelines on adding topics consistently.
+
+---
+
+## File Structure
+
+Topicgen is a single self-contained HTML file. All logic, styles, and data are inline:
+
+```
+Topicgen
+├── <style>           CSS — layout, card design, tab nav, difficulty badges
+├── <body>            HTML — tab structure, card container, history panel
+└── <script>
+    ├── topicsDatabase    Array of all topic objects
+    ├── generateTopic()   Picks a random topic (filtered by active tab)
+    ├── renderCard()      Populates the card UI with a topic object
+    ├── toggleSave()      Adds or removes the current card from the saved list
+    ├── renderSaved()     Renders the Saved Topics tab content
+    ├── toggleHistory()   Expands or collapses the history panel
+    └── setupEventListeners()  Wires all button and tab interactions
+```
+
+---
+
+## Related
+
+- [SOC-Simulator](../SOC-Simulator/README.md) — a full interactive SOC platform for role-based interview preparation
+- [MITRE ATT&CK](https://attack.mitre.org/) — the technique taxonomy Topicgen's offensive topics are drawn from
+- [MITRE D3FEND](https://d3fend.mitre.org/) — the countermeasure framework Topicgen's defensive topics are drawn from
