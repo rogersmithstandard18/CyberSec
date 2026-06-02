@@ -16,7 +16,7 @@ An interactive, single-file Security Operations Center platform that simulates a
 
 ---
 
-### [Topicgen — Cybersecurity Topic Generator](./Topicgen/README.md)
+### [Topicgen — Cybersecurity Topic Generator](./Topicgen)
 
 A topic-card generator for red team and blue team study sessions. Draws from a curated library of MITRE ATT&CK-mapped offensive and defensive topics, surfacing them one at a time with difficulty ratings, descriptions, and save/history functionality.
 
